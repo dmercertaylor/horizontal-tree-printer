@@ -3,9 +3,40 @@
 int main(int argc, char **argv)
 {
     srand((unsigned) time(NULL));
-    Node *tree = generate_random_tree(5, 6);
+    int depth;
+    if(argc < 2)
+    {
+        depth = (rand() % 5) + 1;
+    }
+    else if (argc == 2)
+    {
+        for(char *c = argv[1]; *c != '\0'; c++)
+        {
+            if((*c < '0' || *c > '9') && *c != '-')
+            {
+            fprintf(stderr, "Depth must be a number\n");
+            return 1;
+            }
+        }
+        depth = atoi(argv[1]);
+        if(depth < 0)
+        {
+            depth *= -1;
+        }
+        if(depth == 0)
+        {
+            fprintf(stderr, "Depth must be at least 1\n");
+            return 1;
+        }
+    }
+    else
+    {
+        fprintf(stderr, "Usage: tree-printer [depth]\n");
+        return 1;
+    }
+    Node *tree = generate_random_tree(depth, 6);
     char *str = draw_tree(tree);
-    printf("%s\n", str);
+    printf("\n\n%s\n\n", str);
     free(str);
     return 0;
 }
@@ -32,17 +63,15 @@ char *draw_tree(Node *root)
     }
     char **screen = create_screen(screen_width, screen_height);
     int start_row = max(0, node_endpoints_left(root) * 2 - 1);
-    printf("start row: %d\n", start_row);
     draw_node(root, screen, data_widths, 0, start_row);
     char *out = *screen;
     free(screen);
     return out;
 }
 
-void draw_node(Node *root, char **screen, int *data_widths, int col, int row)
+int draw_node(Node *root, char **screen, int *data_widths, int col, int row)
 {
-    printf("data: %s, row: %d\n", root->data, row);
-    if(root == NULL) return;
+    if(root == NULL) return row;
     int data_len = root->data ? strlen(root->data) : 0;
 
     if(!root->left && !root->right)
@@ -52,7 +81,7 @@ void draw_node(Node *root, char **screen, int *data_widths, int col, int row)
             draw_on_screen(screen, row, col - 2, "- ");
         }
         draw_on_screen(screen, row, col, root->data);
-        return;
+        return row;
     }
 
     int data_end = col + *data_widths;
@@ -61,31 +90,22 @@ void draw_node(Node *root, char **screen, int *data_widths, int col, int row)
     {
         int row_left = row - max(1, node_endpoints_right(root->left) * 2);
         int row_right = row + max(1, node_endpoints_left(root->right) * 2);
-        draw_node(root->left, screen, data_widths + 1, data_end + 5, row_left);
-        draw_node(root->right, screen, data_widths + 1, data_end + 5, row_right);
-        int line_left = row, line_right = row;
-        while(screen[line_left][data_end + 3] != '-')
+        int line_left = draw_node(root->left, screen, data_widths + 1, data_end + 5, row_left);
+        int line_right = draw_node(root->right, screen, data_widths + 1, data_end + 5, row_right);
+        for(int i = line_left + 1; i < line_right; i++)
         {
-            screen[line_left][data_end + 2] = '|';
-            line_left--;
-        }
-        while(screen[line_right][data_end + 3] != '-')
-        {
-            screen[line_right][data_end + 2] = '|';
-            line_right++;
+            screen[i][data_end + 2] = '|';
         }
         screen[line_left][data_end + 2] = '.';
         screen[line_right][data_end + 2] = '\'';
         write_line = (line_left + line_right) / 2;
-        if(row > write_line && line_left + line_right % 2) write_line++;
+        if(row > write_line && (line_left + line_right) % 2) ++write_line;
     }
     else
     {
         Node *next_node = root->left ? root->left : root->right;
-        draw_node(next_node, screen, data_widths + 1, data_end + 5, row);
+        write_line = draw_node(next_node, screen, data_widths + 1, data_end + 5, row);
         int direction = root->left ? -1 : 1;
-        int write_line = row;
-        while(screen[write_line][data_end + 3] != '-') write_line += direction;
         screen[write_line][data_end + 2] = '-';
     }
     /* draw root->data and brackets */
@@ -107,6 +127,7 @@ void draw_node(Node *root, char **screen, int *data_widths, int col, int row)
             draw_on_screen(screen, write_line, col - 2, "--");
         }
     }
+    return write_line;
 }
 
 char **create_screen(int width, int height)
@@ -129,7 +150,7 @@ char **create_screen(int width, int height)
 void draw_on_screen(char **screen, int row, int col, char *str)
 {
     if(str == NULL) return;
-    for(int i = 0; str[i] != '\0'; i++)
+    for(int i = 0; str[i] != '\0'; ++i)
     {
         screen[row][col + i] = str[i];
     }

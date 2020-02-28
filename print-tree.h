@@ -14,7 +14,7 @@ typedef struct Node
 } Node;
 
 char *draw_tree(Node *root);
-void draw_node(Node *root, char **screen, int *data_width, int col, int row);
+int draw_node(Node *root, char **screen, int *data_width, int col, int row);
 
 /*
  * Generates a string of whitespaces with newlines at every width+1.
