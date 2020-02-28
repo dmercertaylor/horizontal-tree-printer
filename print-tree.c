@@ -2,9 +2,8 @@
 
 int main(int argc, char **argv)
 {
-    Node *tree = generate_with_leaves(strdup("a"),strdup("b"),strdup("c"));
-    generate_leaves(tree->left, strdup("e"), strdup("f"));
-    generate_leaves(tree->right, strdup("e"), strdup("f"));
+    srand((unsigned) time(NULL));
+    Node *tree = generate_random_tree(5, 6);
     char *str = draw_tree(tree);
     printf("%s\n", str);
     free(str);
@@ -83,20 +82,31 @@ void draw_node(Node *root, char **screen, int *data_widths, int col, int row)
     else
     {
         Node *next_node = root->left ? root->left : root->right;
-        draw_node(next_node, screen, data_widths + 1, col + *data_widths + 5, row);
+        draw_node(next_node, screen, data_widths + 1, data_end + 5, row);
         int direction = root->left ? -1 : 1;
         int write_line = row;
         while(screen[write_line][data_end + 3] != '-') write_line += direction;
+        screen[write_line][data_end + 2] = '-';
     }
     /* draw root->data and brackets */
-    if(root->data) draw_on_screen(screen, write_line, col, root->data);
+    if(root->data && data_len > 0) draw_on_screen(screen, write_line, col, root->data);
     else screen[write_line][col] = '-';
     /* draw padding dashes if data is short */
     for(int i = col + data_len + 1; i < data_end + 2; i++)
     {
         screen[write_line][i] = '-';
     }
-    if(col > 0) draw_on_screen(screen, write_line, col - 2, "- ");
+    if(col > 0)
+    {
+        if(root->data && data_len > 0)
+        {
+            draw_on_screen(screen, write_line, col - 2, "- ");
+        }
+        else
+        {
+            draw_on_screen(screen, write_line, col - 2, "--");
+        }
+    }
 }
 
 char **create_screen(int width, int height)
