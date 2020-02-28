@@ -4,7 +4,7 @@ int main(int argc, char **argv)
 {
     Node *tree = generate_with_leaves(strdup("a"),strdup("b"),strdup("c"));
     generate_leaves(tree->left, strdup("e"), strdup("f"));
-    generate_leaves(tree->right, strdup("g"), strdup("h"));
+    generate_leaves(tree->right, strdup("e"), strdup("f"));
     char *str = draw_tree(tree);
     printf("%s\n", str);
     free(str);
@@ -33,6 +33,7 @@ char *draw_tree(Node *root)
     }
     char **screen = create_screen(screen_width, screen_height);
     int start_row = max(0, node_endpoints_left(root) * 2 - 1);
+    printf("start row: %d\n", start_row);
     draw_node(root, screen, data_widths, 0, start_row);
     char *out = *screen;
     free(screen);
@@ -41,6 +42,7 @@ char *draw_tree(Node *root)
 
 void draw_node(Node *root, char **screen, int *data_widths, int col, int row)
 {
+    printf("data: %s, row: %d\n", root->data, row);
     if(root == NULL) return;
     int data_len = root->data ? strlen(root->data) : 0;
 
@@ -62,7 +64,7 @@ void draw_node(Node *root, char **screen, int *data_widths, int col, int row)
         int row_right = row + max(1, node_endpoints_left(root->right) * 2);
         draw_node(root->left, screen, data_widths + 1, data_end + 5, row_left);
         draw_node(root->right, screen, data_widths + 1, data_end + 5, row_right);
-        int line_left = row, line_right = row + 1;
+        int line_left = row, line_right = row;
         while(screen[line_left][data_end + 3] != '-')
         {
             screen[line_left][data_end + 2] = '|';
@@ -71,21 +73,21 @@ void draw_node(Node *root, char **screen, int *data_widths, int col, int row)
         while(screen[line_right][data_end + 3] != '-')
         {
             screen[line_right][data_end + 2] = '|';
-            line_right--;
+            line_right++;
         }
         screen[line_left][data_end + 2] = '.';
         screen[line_right][data_end + 2] = '\'';
         write_line = (line_left + line_right) / 2;
+        if(row > write_line && line_left + line_right % 2) write_line++;
     }
     else
     {
         Node *next_node = root->left ? root->left : root->right;
         draw_node(next_node, screen, data_widths + 1, col + *data_widths + 5, row);
         int direction = root->left ? -1 : 1;
-        int write_line = row + direction;
+        int write_line = row;
         while(screen[write_line][data_end + 3] != '-') write_line += direction;
     }
-    printf("data: %s, write_line: %d\n", root->data, write_line);
     /* draw root->data and brackets */
     if(root->data) draw_on_screen(screen, write_line, col, root->data);
     else screen[write_line][col] = '-';
@@ -101,7 +103,6 @@ char **create_screen(int width, int height)
 {
     char *output = malloc((width + 1) * height);
     char **screen = malloc(sizeof(char *) * height);
-    printf("width: %d, height: %d, width * height: %d\n", width, height, width * height);
     for(int i = 0; i < height; i++)
     {
         screen[i] = output + ((width + 1) * i);
