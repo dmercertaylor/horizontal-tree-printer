@@ -36,8 +36,9 @@ int main(int argc, char **argv)
     }
     Node *tree = generate_random_tree(depth, 6);
     char *str = draw_tree(tree);
-    printf("\n\n%s\n\n", str);
+    printf("%s\n", str);
     free(str);
+    free_tree(tree);
     return 0;
 }
 /*
